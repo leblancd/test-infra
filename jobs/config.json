@@ -2784,6 +2784,24 @@
       "sig-scheduling"
     ]
   },
+  "ci-kubernetes-e2e-gce-dind-ipv6": {
+    "args": [
+      "--cluster=",
+      "--deployment=gce-dind",
+      "--extract=ci/latest-bazel",
+      "--gce-dind-image=rpothier/kubeadm-dind-cluster:k8s-1.10",
+      "--gcp-zone=us-central1-f",
+      "--ip-mode=ipv6",
+      "--num-nodes=2",
+      "--provider=gce",
+      "--test_args=--ginkgo.focus=Networking|Services --ginkgo.skip=IPv4|Networking-Performance|Federation|preserve\\ssource\\spod|session\\saffinity|functioning\\sNodePort|pod-Service|endpoint-Service|update\\snodePort|node-Service:\\sudp --num-nodes=2 --minStartupPods=8",
+      "--timeout=55m"
+    ],
+    "scenario": "kubernetes_e2e",
+    "sigOwners": [
+      "sig-network"
+    ]
+  },
   "ci-kubernetes-e2e-gce-federation-release-1-8": {
     "args": [
       "--check-leaked-resources",
@@ -12642,6 +12660,25 @@
     "scenario": "kubernetes_e2e",
     "sigOwners": [
       "sig-scheduling"
+    ]
+  },
+  "pull-kubernetes-e2e-gce-dind-ipv6": {
+    "args": [
+      "--cluster=",
+      "--deployment=gce-dind",
+      "--gce-dind-image=rpothier/kubeadm-dind-cluster:k8s-1.10",
+      "--gcp-zone=us-central1-f",
+      "--ginkgo-parallel=30",
+      "--ip-mode=ipv6",
+      "--num-nodes=2",
+      "--provider=gce",
+      "--test_args=--ginkgo.focus=Networking|Services --ginkgo.skip=IPv4|Networking-Performance|Federation|preserve\\ssource\\spod|session\\saffinity|functioning\\sNodePort|pod-Service|endpoint-Service|update\\snodePort|node-Service:\\sudp --num-nodes=2 --minStartupPods=8",
+      "--timeout=55m",
+      "--use-shared-build=bazel"
+    ],
+    "scenario": "kubernetes_e2e",
+    "sigOwners": [
+      "sig-network"
     ]
   },
   "pull-kubernetes-e2e-gce-large-performance": {

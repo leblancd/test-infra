@@ -2026,6 +2026,38 @@ presubmits:
         resources:
           requests:
             memory: "6Gi"
+  - name: pull-kubernetes-e2e-gce-dind-ipv6
+    agent: kubernetes
+    context: pull-kubernetes-e2e-gce-dind-ipv6
+    max_concurrency: 8
+    skip_report: true
+    run_if_changed: '^(cmd/kubeadm|build/debs).*$'
+    rerun_command: "/test pull-kubernetes-e2e-gce-dind-ipv6"
+    trigger: "(?m)^/test pull-kubernetes-e2e-gce-dind-ipv6,?(\\s+|$)"
+    skip_branches:
+    - release-1.6 # doesn't support IPv6
+    - release-1.7 # doesn't support IPv6
+    - release-1.8 # doesn't support IPv6
+    labels:
+      preset-service-account: true
+      preset-k8s-ssh: true
+    spec:
+      containers:
+      - image: gcr.io/k8s-testimages/e2e-gce-dind:v20180417-c11fd8c
+        args:
+        - "--repo=k8s.io/$(REPO_NAME)=$(PULL_REFS)"
+        - "--repo=github.com/Mirantis/kubeadm-dind-cluster=k8s-1.10"
+        - "--upload=gs://kubernetes-jenkins/pr-logs"
+        - "--git-cache=/root/.cache/git"
+        - "--timeout=75"
+        - "--clean"
+        # Privileged mode required to enable IPv6
+        securityContext:
+          privileged: true
+        env:
+        - name: SKIP_RELEASE_VALIDATION # See: https://github.com/kubernetes/kubernetes/pull/50391
+          value: true
+
   - name: pull-kubernetes-e2e-gce-large-performance
     agent: kubernetes
     context: pull-kubernetes-e2e-gce-large-performance
@@ -3995,6 +4027,50 @@ presubmits:
           defaultMode: 256
           secretName: ssh-security
     trigger: (?m)^/test( all| pull-security-kubernetes-e2e-gce-device-plugin-gpu),?(\s+|$)
+  - agent: kubernetes
+    always_run: false
+    cluster: security
+    context: pull-security-kubernetes-e2e-gce-dind-ipv6
+    labels:
+      preset-k8s-ssh: "true"
+      preset-service-account: "true"
+    max_concurrency: 8
+    name: pull-security-kubernetes-e2e-gce-dind-ipv6
+    rerun_command: /test pull-security-kubernetes-e2e-gce-dind-ipv6
+    run_if_changed: ^(cmd/kubeadm|build/debs).*$
+    skip_branches:
+    - release-1.6
+    - release-1.7
+    - release-1.8
+    skip_report: true
+    spec:
+      containers:
+      - args:
+        - --ssh=/etc/ssh-security/ssh-security
+        - --repo=github.com/kubernetes-security/$(REPO_NAME)=$(PULL_REFS)
+        - --repo=github.com/Mirantis/kubeadm-dind-cluster=k8s-1.10
+        - --upload=gs://kubernetes-security-prow/pr-logs
+        - --timeout=75
+        - --clean
+        - --
+        - --gcs-shared=gs://kubernetes-security-prow/bazel
+        env:
+        - name: SKIP_RELEASE_VALIDATION
+          value: "true"
+        image: gcr.io/k8s-testimages/e2e-gce-dind:v20180417-c11fd8c
+        name: ""
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /etc/ssh-security
+          name: ssh-security
+      volumes:
+      - name: ssh-security
+        secret:
+          defaultMode: 256
+          secretName: ssh-security
+    trigger: (?m)^/test pull-security-kubernetes-e2e-gce-dind-ipv6,?(\s+|$)
   - agent: kubernetes
     always_run: false
     branches:
@@ -8561,6 +8637,26 @@ periodics:
       - --timeout=300
       - --bare
       image: gcr.io/k8s-testimages/kubekins-e2e:v20180418-79a97ca02-master
+
+- name: ci-kubernetes-e2e-gce-dind-ipv6
+  interval: 6h
+  agent: kubernetes
+  labels:
+    preset-service-account: true
+    preset-k8s-ssh: true
+  spec:
+    containers:
+    - image: gcr.io/k8s-testimages/e2e-gce-dind:v20180417-c11fd8c
+      args:
+      - "--repo=k8s.io/kubernetes=master"
+      - "--repo=github.com/Mirantis/kubeadm-dind-cluster=k8s-1.10"
+      - "--upload=gs://kubernetes-jenkins/logs"
+      - "--git-cache=/root/.cache/git"
+      - "--timeout=75"
+      - "--clean"
+      # Privileged mode required to enable IPv6
+      securityContext:
+        privileged: true
 
 - interval: 1h
   agent: kubernetes
