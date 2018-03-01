@@ -38,6 +38,7 @@ import (
 	"k8s.io/test-infra/boskos/client"
 	"k8s.io/test-infra/kubetest/conformance"
 	"k8s.io/test-infra/kubetest/dind"
+	"k8s.io/test-infra/kubetest/gcedind"
 	"k8s.io/test-infra/kubetest/process"
 	"k8s.io/test-infra/kubetest/util"
 )
@@ -88,6 +89,7 @@ type options struct {
 	gcpRegion           string
 	gcpZone             string
 	ginkgoParallel      ginkgoParallelValue
+	ipMode              string
 	kubecfg             string
 	kubemark            bool
 	kubemarkMasterSize  string
@@ -100,6 +102,7 @@ type options struct {
 	nodeArgs            string
 	nodeTestArgs        string
 	nodeTests           bool
+	numNodes            string
 	perfTests           bool
 	provider            string
 	publish             string
@@ -139,7 +142,6 @@ func defineFlags() *options {
 	flag.BoolVar(&o.extractSource, "extract-source", false, "Extract k8s src together with other tarballs")
 	flag.BoolVar(&o.federation, "federation", false, "If true, start/tear down the federation control plane along with the clusters. To only start/tear down the federation control plane, specify --deployment=none")
 	flag.BoolVar(&o.flushMemAfterBuild, "flush-mem-after-build", false, "If true, try to flush container memory after building")
-	flag.Var(&o.ginkgoParallel, "ginkgo-parallel", fmt.Sprintf("Run Ginkgo tests in parallel, default %d runners. Use --ginkgo-parallel=N to specify an exact count.", defaultGinkgoParallel))
 	flag.StringVar(&o.gcpCloudSdk, "gcp-cloud-sdk", "", "Install/upgrade google-cloud-sdk to the gs:// path if set")
 	flag.StringVar(&o.gcpProject, "gcp-project", "", "For use with gcloud commands")
 	flag.StringVar(&o.gcpProjectType, "gcp-project-type", "", "Explicitly indicate which project type to select from boskos")
@@ -154,6 +156,8 @@ func defineFlags() *options {
 	flag.StringVar(&o.gcpImageProject, "image-project", "", "Project containing node image family, required when --gcp-node-image=CUSTOM")
 	flag.StringVar(&o.gcpNodes, "gcp-nodes", "", "(--provider=gce only) Number of nodes to create.")
 	flag.StringVar(&o.gcpNodeSize, "gcp-node-size", "", "(--provider=gce only) Size of nodes to create (e.g n1-standard-1).")
+	flag.Var(&o.ginkgoParallel, "ginkgo-parallel", fmt.Sprintf("Run Ginkgo tests in parallel, default %d runners. Use --ginkgo-parallel=N to specify an exact count.", defaultGinkgoParallel))
+	flag.StringVar(&o.ipMode, "ip-mode", "ipv4", "IP Mode. Can be 'ipv4', 'ipv6', or 'dual-stack'.")
 	flag.StringVar(&o.kubecfg, "kubeconfig", "", "The location of a kubeconfig file.")
 	flag.StringVar(&o.focusRegex, "ginkgo-focus", "", "The ginkgo regex to focus. Currently only respected for (dind).")
 	flag.StringVar(&o.skipRegex, "ginkgo-skip", "", "The ginkgo regex to skip. Currently only respected for (dind).")
@@ -168,6 +172,7 @@ func defineFlags() *options {
 	flag.StringVar(&o.nodeTestArgs, "node-test-args", "", "Test args specifically for node e2e tests.")
 	flag.BoolVar(&o.noAllowDup, "no-allow-dup", false, "if set --allow-dup will not be passed to push-build and --stage will error if the build already exists on the gcs path")
 	flag.BoolVar(&o.nodeTests, "node-tests", false, "If true, run node-e2e tests.")
+	flag.StringVar(&o.numNodes, "num-nodes", "4", "Number of nodes to create.")
 	flag.BoolVar(&o.perfTests, "perf-tests", false, "If true, run tests from perf-tests repo.")
 	flag.StringVar(&o.provider, "provider", "", "Kubernetes provider such as gce, gke, aws, etc")
 	flag.StringVar(&o.publish, "publish", "", "Publish version to the specified gs:// path on success")
@@ -243,6 +248,8 @@ func getDeployer(o *options) (deployer, error) {
 		return conformance.NewDeployer(o.kubecfg)
 	case "dind":
 		return dind.NewDeployer(o.kubecfg, o.dindImage, control)
+	case "gce-dind":
+		return gcedind.NewDeployer(o.gcpProject, o.gcpZone, o.numNodes, o.ipMode, control)
 	case "gke":
 		return newGKE(o.provider, o.gcpProject, o.gcpZone, o.gcpRegion, o.gcpNetwork, o.gcpNodeImage, o.gcpImageFamily, o.gcpImageProject, o.cluster, &o.testArgs, &o.upgradeArgs)
 	case "kops":

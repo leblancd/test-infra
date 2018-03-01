@@ -2132,6 +2132,10 @@ test_groups:
 - name: pull-kubernetes-e2e-gce-device-plugin-gpu
   gcs_prefix: kubernetes-jenkins/pr-logs/directory/pull-kubernetes-e2e-gce-device-plugin-gpu
   num_columns_recent: 20
+- name: pull-kubernetes-e2e-gce-dind-ipv6
+  gcs_prefix: kubernetes-jenkins/pr-logs/directory/pull-kubernetes-e2e-gce-dind-ipv6
+  days_of_results: 1
+  num_columns_recent: 20
 - name: pull-kubernetes-e2e-gke-device-plugin-gpu
   gcs_prefix: kubernetes-jenkins/pr-logs/directory/pull-kubernetes-e2e-gke-device-plugin-gpu
   num_columns_recent: 20
@@ -2295,6 +2299,8 @@ test_groups:
   gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-e2e-gke-cos-k8sstable1-reboot
 - name: ci-kubernetes-soak-gci-gce-stable1
   gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-soak-gci-gce-stable1
+- name: ci-kubernetes-e2e-gce-dind-ipv6
+  gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-e2e-gce-dind-ipv6
 - name: ci-kubernetes-e2e-gce-federation-release-1-8
   gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-e2e-gce-federation-release-1-8
 - name: ci-kubernetes-e2e-gke-gci-stable2-gci-stable1-upgrade-master
@@ -5040,6 +5046,12 @@ dashboards:
     description: 'network gci-gce tests with CoreDNS'
     alert_options:
       alert_mail_to_addresses: 'kubernetes-sig-network-test-failures@googlegroups.com'
+  - name: gce-dind-ipv6
+    test_group_name: ci-kubernetes-e2e-gce-dind-ipv6
+    base_options: 'include-filter-by-regex=\[sig-network\]'
+    description: 'network GCE DinD-based IPv6 tests'
+    alert_options:
+      alert_mail_to_addresses: 'kubernetes-sig-network-test-failures@googlegroups.com'
   - name: gce-alpha-api
     test_group_name: ci-kubernetes-e2e-gce-alpha-api
     alert_options:
@@ -6053,6 +6065,9 @@ dashboards:
     base_options: 'width=10'
   - name: pull-kubernetes-e2e-gce-device-plugin-gpu
     test_group_name: pull-kubernetes-e2e-gce-device-plugin-gpu
+    base_options: 'width=10'
+  - name: pull-kubernetes-e2e-gce-dind-ipv6
+    test_group_name: pull-kubernetes-e2e-gce-dind-ipv6
     base_options: 'width=10'
   - name: pull-kubernetes-e2e-gke-device-plugin-gpu
     test_group_name: pull-kubernetes-e2e-gke-device-plugin-gpu
