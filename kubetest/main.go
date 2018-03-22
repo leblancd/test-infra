@@ -239,6 +239,8 @@ func getDeployer(o *options) (deployer, error) {
 			return newKubernetesAnywhereMultiCluster(o.gcpProject, o.gcpZone, o.multiClusters)
 		}
 		return newKubernetesAnywhere(o.gcpProject, o.gcpZone)
+	case "kubeadm-dind":
+		return newKubeadmDinD()
 	case "node":
 		return nodeDeploy{}, nil
 	case "none":
