@@ -18,7 +18,13 @@ set -o nounset
 set -o pipefail
 
 # get test-infra for latest bootstrap etc
-git clone https://github.com/kubernetes/test-infra
+#TEMP: Clone private un-merged test-infra repo
+git clone -b ipv6_prow_dind https://github.com/leblancd/test-infra
+# git clone https://github.com/kubernetes/test-infra
+
+
+# TEMP: Enable IPv6
+sysctl -w net.ipv6.conf.all.disable_ipv6=0
 
 
 # Check if the job has opted-in to bazel remote caching and if so generate 
@@ -90,12 +96,20 @@ fi
 # disable error exit so we can run post-command cleanup
 set +o errexit
 # actually start bootstrap and the job
+#TEMP: Use private google storage area
 ./test-infra/jenkins/bootstrap.py \
     --job=${JOB_NAME} \
     --service-account=${GOOGLE_APPLICATION_CREDENTIALS} \
-    --upload='gs://kubernetes-jenkins/logs' \
     "$@"
+#./test-infra/jenkins/bootstrap.py \
+#    --job=${JOB_NAME} \
+#    --service-account=${GOOGLE_APPLICATION_CREDENTIALS} \
+#    --upload='gs://kubernetes-jenkins/logs' \
+#    "$@"
 EXIT_VALUE=$?
+
+#### TEMP: Run a bash shell
+/bin/bash
 
 # cleanup after job
 if [[ "${DOCKER_IN_DOCKER_ENABLED}" == "true" ]]; then

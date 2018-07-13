@@ -83,7 +83,7 @@ var (
 	kubernetesDir = "/workspace/k8s.io/kubernetes"
 
 	// Path to kubeadm-dind-cluster scripts
-	dindScriptsPath = "/workspace/github.com/Mirantis/kubeadm-dind-cluster"
+	dindScriptsPath = "/workspace/github.com/leblancd/kubeadm-dind-cluster/fixed"
 
 	// Location of container image for kubeadm-dind-cluster (K-D-C) scripts.
 	// TODO: This URL can be deleted once the Mirantis K-D-C stable branch
@@ -151,8 +151,8 @@ func (d *Deployer) Up() error {
 	}
 
 	// Bring up a cluster on a GCE instance
-	gceSetupScript := filepath.Join(dindScriptsPath, "gce-setup.sh")
-	if err := d.runBashCmd("source " + gceSetupScript); err != nil {
+	gceSetupScript := filepath.Join(dindScriptsPath, "dind-cluster-stable.sh")
+	if err := d.run(gceSetupScript + " up"); err != nil {
 		return err
 	}
 
@@ -182,19 +182,6 @@ func (d *Deployer) IsUp() error {
 // - Kube worker node containers
 // to a local artifacts directory.
 func (d *Deployer) DumpClusterLogs(localPath, gcsPath string) error {
-	// Set up a docker-machine connection to the GCE instance
-	if err := d.dockerMachineConnect(); err != nil {
-		return err
-	}
-
-	// Confirm that the project and instance are available on GCE
-	if err := d.checkProject(); err != nil {
-		return err
-	}
-	if err := d.checkInstance(); err != nil {
-		return err
-	}
-
 	// Save logs from GCE instance
 	if err := d.saveInstanceLogs(localPath); err != nil {
 		return err
@@ -214,32 +201,19 @@ func (d *Deployer) TestSetup() error {
 	return nil
 }
 
-// Down brings the DinD-based cluster down, removes the GCE instance
-// and cleans up the docker-machine state.
+// Down brings the DinD-based cluster down and cleans up any DinD state
 func (d *Deployer) Down() error {
-	// Check whether expected docker-machine exists
-	o, err := d.getOutput("docker-machine ls")
-	if err != nil {
-		return err
-	}
-	if !strings.Contains(string(o), gceInstanceName) {
-		// Nothing to clean up
-		return nil
-	}
-
-	// Bring the cluster down and remove the docker-machine
-	dindScript := fmt.Sprintf(filepath.Join(dindScriptsPath, "dind-cluster.sh"))
-	clusterDownCommands := []string{
-		dindScript + " down",
-		dindScript + " clean",
-		"docker-machine kill " + gceInstanceName,
-		"docker-machine rm -y " + gceInstanceName,
-	}
-	for _, cmd := range clusterDownCommands {
-		if err := d.run(cmd); err != nil {
-			return err
-		}
-	}
+	// Bring the cluster down and clean up DinD state
+	//dindScript := fmt.Sprintf(filepath.Join(dindScriptsPath, "dind-cluster-stable.sh"))
+	//clusterDownCommands := []string{
+	//	dindScript + " down",
+	//	dindScript + " clean",
+	//}
+	//for _, cmd := range clusterDownCommands {
+	//	if err := d.run(cmd); err != nil {
+	//		return err
+	//	}
+	//}
 	return nil
 }
 
@@ -398,6 +372,7 @@ func (d *Deployer) setClusterEnv() error {
 		"BUILD_HYPERKUBE":             "y",
 		"IP_MODE":                     ipMode,
 		"KUBERNETES_CONFORMANCE_TEST": "yes",
+		"REMOTE_DNS64_V4SERVER":       "173.37.87.157",
 	}
 	for env, val := range envMap {
 		if err := os.Setenv(env, val); err != nil {
@@ -443,33 +418,6 @@ func (d *Deployer) clusterSize() (int, error) {
 		return len(strings.Split(trimmed, "\n")), nil
 	}
 	return 0, nil
-}
-
-// checkProject confirms that the expected GCE project exists.
-func (d *Deployer) checkProject() error {
-	log.Printf("Confirming GCE project '%s'", d.project)
-	o, err := d.getOutput("gcloud config list project --format value(core.project)")
-	if err != nil {
-		return err
-	}
-	if project := strings.TrimSpace(string(o)); project != d.project {
-		return fmt.Errorf("GCE project is '%s', expected project '%s'", project, d.project)
-	}
-	return nil
-}
-
-// checkInstance confirms that the expected GCE instance exists.
-func (d *Deployer) checkInstance() error {
-	log.Printf("Confirming GCE instance '%s'", gceInstanceName)
-	cmd := fmt.Sprintf("gcloud compute instances list --filter=name=(%s)", gceInstanceName)
-	o, err := d.getOutput(cmd)
-	if err != nil {
-		return err
-	}
-	if !strings.Contains(string(o), gceInstanceName) {
-		return fmt.Errorf("Could not find instance '%s'", gceInstanceName)
-	}
-	return nil
 }
 
 // saveInstanceLogs collects a serial log, service logs, and docker state

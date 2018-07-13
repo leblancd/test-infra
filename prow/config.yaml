@@ -2382,10 +2382,12 @@ presubmits:
         - "--git-cache=/root/.cache/git"
         - "--timeout=75"
         - "--clean"
-        # Privileged mode required to enable IPv6
+        # Privileged mode required to enable IPv6 and Docker-in-Docker mode
         securityContext:
           privileged: true
         env:
+        - name: DOCKER_IN_DOCKER_ENABLED
+          value: "true"
         - name: SKIP_RELEASE_VALIDATION # See: https://github.com/kubernetes/kubernetes/pull/50391
           value: "true"
 
@@ -7106,9 +7108,12 @@ periodics:
       - "--git-cache=/root/.cache/git"
       - "--timeout=75"
       - "--clean"
-      # Privileged mode required to enable IPv6
+      # Privileged mode required to enable IPv6 and Docker-in-Docker mode
       securityContext:
         privileged: true
+      env:
+      - name: DOCKER_IN_DOCKER_ENABLED
+        value: "true"
 
 - interval: 1h
   agent: kubernetes
