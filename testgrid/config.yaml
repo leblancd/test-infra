@@ -2164,6 +2164,10 @@ test_groups:
   num_columns_recent: 20
   alert_stale_results_hours: 24
   num_failures_to_alert: 10
+- name: pull-kubernetes-e2e-kubeadm-dind-ipv6
+  gcs_prefix: kubernetes-jenkins/pr-logs/directory/pull-kubernetes-e2e-kubeadm-dind-ipv6
+  days_of_results: 1
+  num_columns_recent: 20
 - name: pull-kubernetes-e2e-kubeadm-gce
   gcs_prefix: kubernetes-jenkins/pr-logs/directory/pull-kubernetes-e2e-kubeadm-gce
   num_columns_recent: 20
@@ -2384,6 +2388,8 @@ test_groups:
   gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-e2e-gke-gci-stable1-gci-stable2-downgrade-cluster-parallel
 - name: ci-kubernetes-e2e-gce-min-node-permissions
   gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-e2e-gce-min-node-permissions
+- name: ci-kubernetes-e2e-kubeadm-dind-ipv6
+  gcs_prefix: kubernetes-jenkins/logs/ci-kubernetes-e2e-kubeadm-dind-ipv6
 - name: ci-federation-build
   gcs_prefix: kubernetes-jenkins/logs/ci-federation-build
 - name: ci-federation-e2e-gce
@@ -5083,6 +5089,12 @@ dashboards:
     description: 'network gci-gce tests with CoreDNS'
     alert_options:
       alert_mail_to_addresses: 'kubernetes-sig-network-test-failures@googlegroups.com'
+  - name: kubeadm-dind-ipv6
+    test_group_name: ci-kubernetes-e2e-kubeadm-dind-ipv6
+    base_options: 'include-filter-by-regex=\[sig-network\]'
+    description: 'network Kubeadm-DinD-Cluster based IPv6 tests'
+    alert_options:
+      alert_mail_to_addresses: 'kubernetes-sig-network-test-failures@googlegroups.com'
   - name: gce-alpha-api
     test_group_name: ci-kubernetes-e2e-gce-alpha-api
     alert_options:
@@ -5109,6 +5121,12 @@ dashboards:
     test_group_name: ci-kubernetes-e2e-gci-gce-alpha-features
     base_options: 'include-filter-by-regex=\[sig-network\]'
     description: 'network gci-gce alpha features e2e tests for master branch'
+    alert_options:
+      alert_mail_to_addresses: 'kubernetes-sig-network-test-failures@googlegroups.com'
+  - name: kubeadm-dind-ipv6
+    test_group_name: ci-kubernetes-e2e-kubeadm-dind-ipv6
+    base_options: 'include-filter-by-regex=\[sig-network\]'
+    description: 'network Kubeadm-DinD-Cluster based IPv6 tests'
     alert_options:
       alert_mail_to_addresses: 'kubernetes-sig-network-test-failures@googlegroups.com'
   - name: kubeadm-gce-ipvs
@@ -6121,6 +6139,9 @@ dashboards:
     base_options: 'width=10'
   - name: pull-kubernetes-e2e-gke
     test_group_name: pull-kubernetes-e2e-gke
+    base_options: 'width=10'
+  - name: pull-kubernetes-e2e-kubeadm-dind-ipv6
+    test_group_name: pull-kubernetes-e2e-kubeadm-dind-ipv6
     base_options: 'width=10'
   - name: pull-kubernetes-e2e-kubeadm-gce
     test_group_name: pull-kubernetes-e2e-kubeadm-gce

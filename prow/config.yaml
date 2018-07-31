@@ -1956,6 +1956,40 @@ presubmits:
         resources:
           requests:
             memory: "6Gi"
+  - name: pull-kubernetes-e2e-kubeadm-dind-ipv6
+    agent: kubernetes
+    context: pull-kubernetes-e2e-kubeadm-dind-ipv6
+    max_concurrency: 8
+    skip_report: true
+    run_if_changed: '^(cmd/kubeadm|build/debs).*$'
+    rerun_command: "/test pull-kubernetes-e2e-kubeadm-dind-ipv6"
+    trigger: "(?m)^/test pull-kubernetes-e2e-kubeadm-dind-ipv6,?(\\s+|$)"
+    skip_branches:
+    - release-1.6 # doesn't support IPv6
+    - release-1.7 # doesn't support IPv6
+    - release-1.8 # doesn't support IPv6
+    labels:
+      preset-service-account: "true"
+      preset-k8s-ssh: "true"
+    spec:
+      containers:
+      - image: gcr.io/k8s-testimages/e2e-kubeadm-dind:v20180417-c11fd8c
+        args:
+        - "--repo=k8s.io/$(REPO_NAME)=$(PULL_REFS)"
+        - "--repo=github.com/Mirantis/kubeadm-dind-cluster=stable"
+        - "--upload=gs://kubernetes-jenkins/pr-logs"
+        - "--git-cache=/root/.cache/git"
+        - "--timeout=75"
+        - "--clean"
+        # Privileged mode required to enable IPv6 and Docker-in-Docker mode
+        securityContext:
+          privileged: true
+        env:
+        - name: DOCKER_IN_DOCKER_ENABLED
+          value: "true"
+        - name: SKIP_RELEASE_VALIDATION # See: https://github.com/kubernetes/kubernetes/pull/50391
+          value: "true"
+
   - name: pull-kubernetes-e2e-gce-large-performance
     agent: kubernetes
     context: pull-kubernetes-e2e-gce-large-performance
@@ -6554,6 +6588,29 @@ periodics:
     volumes:
     - name: docker-graph
       emptyDir: {}
+
+- name: ci-kubernetes-e2e-kubeadm-dind-ipv6
+  interval: 6h
+  agent: kubernetes
+  labels:
+    preset-service-account: "true"
+    preset-k8s-ssh: "true"
+  spec:
+    containers:
+    - image: gcr.io/k8s-testimages/e2e-kubeadm-dind:v20180417-c11fd8c
+      args:
+      - "--repo=k8s.io/kubernetes=master"
+      - "--repo=github.com/Mirantis/kubeadm-dind-cluster=stable"
+      - "--upload=gs://kubernetes-jenkins/logs"
+      - "--git-cache=/root/.cache/git"
+      - "--timeout=75"
+      - "--clean"
+      # Privileged mode required to enable IPv6 and Docker-in-Docker mode
+      securityContext:
+        privileged: true
+      env:
+      - name: DOCKER_IN_DOCKER_ENABLED
+        value: "true"
 
 - interval: 1h
   name: ci-kubernetes-verify-master
