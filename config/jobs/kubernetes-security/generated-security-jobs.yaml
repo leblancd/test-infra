@@ -1214,6 +1214,51 @@ presubmits:
     trigger: (?m)^/test( all| pull-security-kubernetes-e2e-gce-device-plugin-gpu),?(\s+|$)
   - agent: kubernetes
     always_run: false
+    cluster: security
+    context: pull-security-kubernetes-e2e-kubeadm-dind-ipv6
+    labels:
+      preset-k8s-ssh: "true"
+      preset-service-account: "true"
+    max_concurrency: 8
+    name: pull-security-kubernetes-e2e-kubeadm-dind-ipv6
+    rerun_command: /test pull-security-kubernetes-e2e-kubeadm-dind-ipv6
+    run_if_changed: ^(cmd/kubeadm|build/debs).*$
+    skip_branches:
+    - release-1.6
+    - release-1.7
+    - release-1.8
+    skip_report: true
+    spec:
+      containers:
+      - args:
+        - --ssh=/etc/ssh-security/ssh-security
+        - --repo=github.com/kubernetes-security/$(REPO_NAME)=$(PULL_REFS)
+        - --repo=github.com/Mirantis/kubeadm-dind-cluster=stable
+        - --upload=gs://kubernetes-security-prow/pr-logs
+        - --git-cache=/root/.cache/git
+        - --timeout=75
+        - --clean
+        - --
+        - --gcs-shared=gs://kubernetes-security-prow/bazel
+        env:
+        - name: SKIP_RELEASE_VALIDATION
+          value: "true"
+        image: gcr.io/k8s-testimages/e2e-kubeadm-dind:v20180417-c11fd8c
+        name: ""
+        resources: {}
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - mountPath: /etc/ssh-security
+          name: ssh-security
+      volumes:
+      - name: ssh-security
+        secret:
+          defaultMode: 256
+          secretName: ssh-security
+    trigger: (?m)^/test pull-security-kubernetes-e2e-kubeadm-dind-ipv6,?(\s+|$)
+  - agent: kubernetes
+    always_run: false
     branches:
     - master
     cluster: security
